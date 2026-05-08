@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Play, RotateCcw, Puzzle, ListOrdered, CheckCircle2, XCircle, Search, GitBranch, Brain, ArrowRight, Settings } from "lucide-react"
+import { Play, RotateCcw, Puzzle, ListOrdered, CheckCircle2, XCircle, Search, GitBranch, Brain, ArrowRight } from "lucide-react"
 
 // ==================== ARBOL.PY - CLASE NODO ====================
 class Nodo {
@@ -284,9 +284,6 @@ export default function PuzzleLinealPage() {
   const [encontrado, setEncontrado] = useState<boolean | null>(null)
   const [error, setError] = useState<string>("")
   const [algoritmoActual, setAlgoritmoActual] = useState<string>("dfs")
-  const [backendUrl, setBackendUrl] = useState<string>("")
-  const [useBackend, setUseBackend] = useState<boolean>(false)
-  const [loading, setLoading] = useState<boolean>(false)
 
   const parseInput = (input: string): number[] | null => {
     try {
@@ -340,30 +337,6 @@ export default function PuzzleLinealPage() {
     }
   }
 
-  const handleSearchBackend = async (algoritmo: string, inicial: number[], sol: number[]) => {
-    setLoading(true)
-    try {
-      const endpoint = `${backendUrl}/api/${algoritmo}`
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado_inicial: inicial, solucion: sol }),
-      })
-
-      if (!response.ok) throw new Error("Error en la respuesta del servidor")
-
-      const data = await response.json()
-      setResultado(data.resultado)
-      setNodosVisitados(data.nodos_visitados)
-      setEncontrado(data.encontrado)
-    } catch (err) {
-      setError(`Error conectando al backend: ${err instanceof Error ? err.message : "Error desconocido"}`)
-      setEncontrado(false)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleSearch = () => {
     setError("")
     const inicial = parseInput(estadoInicial)
@@ -378,11 +351,7 @@ export default function PuzzleLinealPage() {
       return
     }
 
-    if (useBackend && backendUrl) {
-      handleSearchBackend(algoritmoActual, inicial, sol)
-    } else {
-      handleSearchLocal(algoritmoActual, inicial, sol)
-    }
+    handleSearchLocal(algoritmoActual, inicial, sol)
   }
 
   const handleReset = () => {
@@ -475,32 +444,6 @@ export default function PuzzleLinealPage() {
               </CardHeader>
 
               <CardContent className="flex flex-col gap-5 p-6">
-                {/* Backend config */}
-                <div className="flex flex-col gap-3 p-4 rounded-lg border border-border bg-secondary/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Settings className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground">Usar Backend Python</span>
-                    </div>
-                    <Button
-                      variant={useBackend ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setUseBackend(!useBackend)}
-                      className="h-8"
-                    >
-                      {useBackend ? "Activado" : "Desactivado"}
-                    </Button>
-                  </div>
-                  {useBackend && (
-                    <Input
-                      value={backendUrl}
-                      onChange={(e) => setBackendUrl(e.target.value)}
-                      placeholder="http://localhost:8000"
-                      className="border-border bg-background text-foreground h-10"
-                    />
-                  )}
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Estado Inicial */}
                   <div>
@@ -547,17 +490,10 @@ export default function PuzzleLinealPage() {
                 <div className="flex gap-3">
                   <Button
                     onClick={handleSearch}
-                    disabled={loading}
                     className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 h-11"
                   >
-                    {loading ? (
-                      <span className="animate-pulse">Buscando...</span>
-                    ) : (
-                      <>
-                        <Play className="mr-2 h-4 w-4" />
-                        Ejecutar {info.nombre}
-                      </>
-                    )}
+                    <Play className="mr-2 h-4 w-4" />
+                    Ejecutar {info.nombre}
                   </Button>
                   <Button
                     onClick={handleReset}
